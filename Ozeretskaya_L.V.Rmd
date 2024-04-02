@@ -1,0 +1,145 @@
+---
+title: "HW3"
+author: "Ozeretskaya L.V."
+date: "2024-03-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+В RStudio создайте RMarkdown-файл и загрузите датасет pima.
+
+```{r}
+library(readxl)
+pima <- read_excel("C:/Users/loz88/Downloads/pima.xlsx")
+View(pima)
+```
+
+В первых двух заданиях вам необходимо посчитать описательные статистики. Для количественной переменной рассчитайте число наблюдений, среднее, стандартное отклонение, 1-й и 3-й квартили, минимум и максимум. Для категориальной переменной определите абсолютную и относительные частоты.
+
+## Необходимо выполнить следующие пункты:
+
+Рассчитайте описательные статистики для переменных glucose, pressure, mass. — 1 балл
+
+```{r}
+library(tidyverse)
+
+descr_glucose <- pima %>%
+  summarise(N = n(),
+    mean_glucose = mean(glucose),
+    median_glucose = median(glucose),
+    sd_glucose = sd(glucose),
+    Q1_glucose = quantile(glucose, probs = 0.25),
+    Q3_glucose = quantile(glucose, probs = 0.75),
+    min_glucose = min(glucose),
+    max_glucose = max(glucose),
+  )
+descr_glucose
+```
+
+```{r}
+descr_pressure <- pima %>%
+  summarise(N = n(),
+    mean_pressure = mean(pressure),
+    median_pressure = median(pressure),
+    sd_pressure = sd(pressure),
+    Q1_pressure = quantile(glucose, probs = 0.25),
+    Q3_pressure = quantile(glucose, probs = 0.75),
+    min_pressure = min(pressure),
+    max_pressure = max(pressure),
+  )
+descr_pressure
+```
+
+```{r}
+descr_mass <- pima %>%
+  summarise(N = n(),
+    mean_mass = mean(mass),
+    median_mass = median(mass),
+    sd_mass = sd(mass),
+    Q1_mass = quantile(glucose, probs = 0.25),
+    Q3_mass = quantile(glucose, probs = 0.75),
+    min_mass = min(mass),
+    max_mass = max(mass),
+  )
+descr_mass
+```
+
+Рассчитайте описательную статистику для переменной diabetes.
+
+```{r}
+pima <- pima %>%
+  mutate_at(vars(diabetes), as.factor)
+descr_diabetes <- pima %>%
+  count(diabetes) %>%
+  mutate(percentage = n / sum(n) * 100)
+descr_diabetes
+```
+Создайте на основе переменной age новую переменную age_group, которая будет отражать следующие возрастные группы: 21–35, 36–49 и 50+. Посчитайте описательную статистику для новой переменной. — 1 балл
+
+```{r}
+pima <- mutate(pima, age_group = ifelse(age <= 35, "21-35",
+  ifelse(age <= 49, "36-49", "50+")))
+pima$age_group <- as.factor(pima$age_group)
+descr_age_group <- pima %>%
+  count(age_group) %>%
+  mutate(percentage = n / sum(n) * 100)
+descr_age_group
+```
+
+Определите 90% доверительный интервал для переменной pedigree. — 2 балла
+
+```{r}
+mean_pedigree <- mean(pima$pedigree)
+sd_pedigree <- sd(pima$pedigree)
+se_pedigree <- sd_pedigree / sqrt(length(pima$pedigree))
+
+alpha <- 0.1
+df <- length(pima$pedigree)
+t <- qt(alpha / 2,
+        df,
+        lower.tail = F)
+CI_pedigree <- c(mean_pedigree - t * se_pedigree,
+                 mean_pedigree + t * se_pedigree)
+CI_pedigree
+```
+
+Постройте график плотности вероятности для переменной glucose и отметьте на нем среднее значение.
+
+```{r, include=TRUE}
+dens_glu <- ggplot(data = pima) +
+  geom_density(aes(glucose)) +
+  theme_light()
+print(dens_glu)
+```
+
+Для той же переменной постройте гистограмму.
+
+```{r, include=TRUE}
+hist(pima$glucose)
+```
+
+Постройте два ящика с усами для значений pos и neg соответственно переменной diabetes. — 3 балла
+
+```{r, include=TRUE}
+box_dia <- ggplot(data = pima) +
+  geom_boxplot(aes(diabetes, glucose, fill = diabetes),
+               outlier.size = 1) +
+  theme_light()
+print(box_dia)
+```
+
+Постройте на одном графике две диаграммы рассеяния для наличия или отсутствия диабета. По оси X представьте значения обхвата трицепса, а по оси Y — массу тела. Выполните окрашивание, заливку и группирование по переменной diabetes. — 3 балла
+
+```{r, include=TRUE}
+pima_new <- subset(pima, triceps != 0 & mass != 0)
+scat_dia <- ggplot(data = pima_new) +
+  geom_point(aes(triceps, mass,
+                 fill = diabetes,
+                 color = diabetes)) +
+  facet_grid(. ~ diabetes) +
+  theme_light()
+print(scat_dia)
+```
